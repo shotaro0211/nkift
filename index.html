@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>NkiFt</title>
+    <meta name="description" content="This NFT is full-on-chain.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon.jpeg">
+    <style>
+      .hide {
+        display:none;
+      }
+      div {
+        color: white;
+        font-family: cursive;
+      }
+      input {
+        resize: none;
+        width: 400px;
+        height: 30px;
+        font-size: 22px;
+        font-family: cursive;
+      }
+      textarea {
+        resize: none;
+        width: 380px;
+        height: 200px;
+        font-size: 20px;
+      }
+      .c-button {
+        appearance: none;
+        border: 0;
+        border-radius: 5px;
+        background: white;
+        color: black;
+        padding: 8px 16px;
+        font-size: 22px;
+        font-family: cursive;
+      }
+      .c-button:hover {
+        background: grey;
+      }
+      .c-button:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px #cbd6ee;
+      }
+
+      ::placeholder {
+        color: #808080;
+        opacity: 0.8;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+  </head>
+  <body style="background-color: #5bc43e;">
+
+    <div name="title">
+      <div style="text-align: center; font-weight: bold; font-size: 50px; margin-top: 50px; margin-bottom: 50px;">
+        NkiFT
+      </div>
+    </div>
+
+    <div name="input-message">
+      <div style="text-align: center; font-size: 30px; margin-right: 440px; margin-bottom: 40px; text-anchor: end">
+        Dear <span id="receiver-name"></span>
+      </div>
+      <div style="text-align: center">
+        <input placeholder="Please write a message here" id="text1" type="text" size="40">
+      </div>
+      <div style="text-align: center">
+        <input placeholder="" id="text2" type="text" size="40">
+      </div>
+      <div style="text-align: center">
+        <input placeholder="" id="text3" type="text" size="40">
+      </div>
+      <div style="text-align: center">
+        <input id="text4" type="text" size="40">
+      </div>
+      <div style="text-align: center">
+        <input id="text5" type="text" size="40">
+      </div>
+      <div style="text-align: center">
+        <input id="text6" type="text" size="40">
+      </div>
+      <div style="text-align: center; margin-top: 50px; margin-left: 400px;">
+        <input id="name" placeholder="Please write your name" type="text" style="width: 210px;" size="40">
+      </div>
+    </div>
+
+    <div style="height: 50px"></div>
+
+    <div class="hide" id="value-div" style="text-align: center; margin-bottom: 20px;">
+      <input style="width: 100px" id="value" type="number"  step="0.001", min="0.001", value="0.001">
+      ETH (Polygon Network)
+      <br><br><button class="c-button" onclick="buttonMint()">Kif</button>
+    </div>
+    <div class="hide" id="approve-div" style="text-align: center; margin-bottom: 20px;">
+      <button class="c-button" onclick="buttonApprove()">Approve</button>
+    </div>
+    <div class="hide" id="connect-div" style="text-align: center">
+      <button class="c-button" onclick="buttonConnect()">Connect</button>
+    </div>
+    <div class="hide" id="connect-error-div" style="text-align: center">
+      error: Can't connect to Metamask
+    </div>
+    <div class="hide" id="network-error-div" style="text-align: center">
+      error: The network is not supported.
+    </div>
+  </body>
+  <script>
+    var myAddress;
+    var contract;
+    var tokenContract;
+
+    var nkiftReceiverId = 0;
+    var nkiftReceiver;
+
+    // ETH on Polygon
+    // var chainId = 137;
+    // var url = "https://opensea.io/assets/matic"
+    // var tokenAddress = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
+    // var address = "0xC6E785C67E2fDE3f1e160f061fba5040C3c2bF0b";
+
+    // GLD on Rinkeby
+    var chainId = 4;
+    var url = "https://testnets.opensea.io/assets";
+    var tokenAddress = "0x794372fC0aE0E8927629c6fa606B99C65c91D6CC";
+    var address = "0xFBbd49B2dC41b73737f53F5Cc7cBe4D9e0225f28";
+
+    var web3 = new Web3(Web3.givenProvider);
+
+    window.open(url + '/' + address + '/0', '_blank'); 
+
+    if (web3.currentProvider == null || web3.currentProvider.isMetaMask == false) {
+      document.getElementById("connect-error-div").classList.remove("hide");
+    } else {
+      web3.eth.getChainId().then(currentChainId => {
+        if (currentChainId != chainId) {
+          document.getElementById("network-error-div").classList.remove("hide");
+        } else {
+          fetch('ERC20.json')
+            .then(response => response.json())
+            .then(data => {
+              tokenContract = new web3.eth.Contract(data, tokenAddress);
+              fetch('nkift.json')
+                .then(response => response.json())
+                .then(data => {
+                  contract = new web3.eth.Contract(data, address);
+                  web3.eth.getAccounts().then(e => {
+                    console.log("myAddress:" + e);
+                    if (e.length > 0) {
+                      myAddress = e[0]
+                      contract.methods.getNkiftReceiver(nkiftReceiverId).call({from: myAddress}).then(receiver => {
+                        nkiftReceiver = receiver;
+                        document.getElementById("receiver-name").innerHTML = nkiftReceiver.name;
+
+                        tokenContract.methods.allowance(myAddress, address).call({from: myAddress}).then(data => {
+                          if (data > 0) {
+                            document.getElementById("value-div").classList.remove("hide");
+                          } else {
+                            document.getElementById("approve-div").classList.remove("hide");
+                          }
+                        });
+                      });
+                    } else {
+                      document.getElementById("connect-div").classList.remove("hide");
+                    }
+                  });
+                }
+              );
+            }
+          );
+        }
+      });
+    }
+
+    const buttonConnect = async() => {
+      window.ethereum.request({ method: 'eth_requestAccounts' }).then(result => {
+        location.reload()
+      });
+    };
+
+    const buttonMint = async() => {
+      var text1 = document.getElementById("text1").value;
+      var text2 = document.getElementById("text2").value;
+      var text3 = document.getElementById("text3").value;
+      var text4 = document.getElementById("text4").value;
+      var text5 = document.getElementById("text5").value;
+      var text6 = document.getElementById("text6").value;
+      var value = document.getElementById("value").value;
+      var name = document.getElementById("name").value;
+      contract.methods.kif(nkiftReceiverId, name, [text1, text2, text3, text4, text5, text6], Web3.utils.toWei(value, 'ether')).send({from: myAddress}).then(result => {
+        contract.methods.totalSupply().call().then(function(total){
+          window.open(url + '/' + address + '/' + (total - 1), '_blank'); 
+        });
+      });
+    };
+
+    const buttonApprove = async() => {
+      tokenContract.methods.balanceOf(myAddress).call().then(function(result){
+        tokenContract.methods.approve(address, result).send({from: myAddress}).then(result => {
+          location.reload()
+        });
+      });
+    };
+  </script>
+</html>
