@@ -130,8 +130,6 @@
 
     var web3 = new Web3(Web3.givenProvider);
 
-    window.open(url + '/' + address + '/0', '_blank'); 
-
     if (web3.currentProvider == null || web3.currentProvider.isMetaMask == false) {
       document.getElementById("connect-error-div").classList.remove("hide");
     } else {
@@ -192,7 +190,7 @@
       var name = document.getElementById("name").value;
       contract.methods.kif(nkiftReceiverId, name, [text1, text2, text3, text4, text5, text6], Web3.utils.toWei(value, 'ether')).send({from: myAddress}).then(result => {
         contract.methods.totalSupply().call().then(function(total){
-          window.open(url + '/' + address + '/' + (total - 1), '_blank'); 
+          window.location.href = url + '/' + address + '/' + (total - 1); 
         });
       });
     };
